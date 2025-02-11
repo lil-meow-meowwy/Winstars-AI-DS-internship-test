@@ -15,14 +15,14 @@ The `MnistClassifier` class provides a unified way to train and predict using an
 ```
 mnist_classifier/
 ├── models/
-│   ├── mnist_classifier_interface.py  # Abstract interface for all classifiers
-│   ├── random_forest_model.py         # Random Forest Classifier implementation
-│   ├── feed_forward_model.py          # Feed-Forward Neural Network implementation
-│   ├── cnn_model.py                   # Convolutional Neural Network implementation
-├── mnist_classifier.py                # Unified MNIST classifier wrapper
-├── main.py                            # Script to train and evaluate models
-├── requirements.txt                    # Dependencies
-├── README.md                           # Project documentation
+│   ├── mnist_classifier_interface.py    # Abstract interface for all classifiers
+│   ├── random_forest_classifier.py      # Random Forest Classifier implementation
+│   ├── feed_forward_nn_classifier.py    # Feed-Forward Neural Network implementation
+│   ├── cnn_classifier.py                # Convolutional Neural Network implementation
+├── mnist_classifier.py                  # Unified MNIST classifier wrapper
+├── demo.ipynb                           # Demo
+├── requirements.txt                     # Dependencies
+├── README.md                            # Project documentation
 ```
 
 ---
