@@ -1,5 +1,5 @@
 import tensorflow as tf
-from models.mnist_classifier_interface import MnistClassifierInterface
+from mnist_classifier_interface import MnistClassifierInterface
 
 class CNNClassifierModel(MnistClassifierInterface):
     def __init__(self):
