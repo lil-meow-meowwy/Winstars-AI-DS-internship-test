@@ -20,7 +20,7 @@ mnist_classifier/
 │   ├── feed_forward_nn_classifier.py    # Feed-Forward Neural Network implementation
 │   ├── cnn_classifier.py                # Convolutional Neural Network implementation
 ├── mnist_classifier.py                  # Unified MNIST classifier wrapper
-├── demo.ipynb                           # Demo
+├── demo.ipynb                           # Jupyter Notebook for training & testing models
 ├── requirements.txt                     # Dependencies
 ├── README.md                            # Project documentation
 ```
@@ -45,62 +45,6 @@ source venv/bin/activate  # On Windows, use: venv\Scripts\activate
 ```bash
 pip install -r requirements.txt
 ```
-
----
-
-Got it! Since you're using a Jupyter Notebook (`demo.ipynb`) instead of a script (`main.py`), I've updated the **README.md** to reflect that.  
-
----
-
-# **MNIST Classifier with Multiple Models**  
-
-This project implements an image classification system for the **MNIST dataset** using three different models:  
-1. **Random Forest Classifier** (RF)  
-2. **Feed-Forward Neural Network** (NN)  
-3. **Convolutional Neural Network** (CNN)  
-
-Each model follows an **Object-Oriented Programming (OOP)** approach and implements a common interface (`MnistClassifierInterface`).  
-The `MnistClassifier` class provides a unified way to train and predict using any of the three models by specifying the algorithm type (`'rf'`, `'nn'`, or `'cnn'`).  
-
----
-
-## **Project Structure**  
-
-```
-mnist_classifier/
-├── models/
-│   ├── mnist_classifier_interface.py  # Abstract interface for all classifiers
-│   ├── random_forest_model.py         # Random Forest Classifier implementation
-│   ├── feed_forward_model.py          # Feed-Forward Neural Network implementation
-│   ├── cnn_model.py                   # Convolutional Neural Network implementation
-├── mnist_classifier.py                # Unified MNIST classifier wrapper
-├── demo.ipynb                         # Jupyter Notebook for training & testing models
-├── requirements.txt                    # Dependencies
-├── README.md                           # Project documentation
-```
-
----
-
-## **Installation**  
-
-### **1. Clone the Repository**  
-```bash
-git clone https://github.com/yourusername/mnist-classifier.git
-cd mnist-classifier
-```
-
-### **2. Create a Virtual Environment (Optional but Recommended)**
-```bash
-python -m venv venv
-source venv/bin/activate  # On Windows, use: venv\Scripts\activate
-```
-
-### **3. Install Dependencies**  
-```bash
-pip install -r requirements.txt
-```
-
----
 
 ## **Usage**  
 
