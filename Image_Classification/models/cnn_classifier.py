@@ -14,7 +14,7 @@ class CNNClassifierModel(MnistClassifierInterface):
 
     def train(self, X_train, y_train):
         X_train = X_train.reshape(-1, 28, 28, 1)
-        self.model.fit(X_train, y_train, epochs=5)
+        self.model.fit(X_train, y_train, epochs=10)
 
     def predict(self, X_test):
         X_test = X_test.reshape(-1, 28, 28, 1)

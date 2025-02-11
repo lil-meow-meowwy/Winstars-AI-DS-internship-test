@@ -11,7 +11,7 @@ class FeedForwardNNClassifierModel(MnistClassifierInterface):
         self.model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
 
     def train(self, X_train, y_train):
-        self.model.fit(X_train, y_train, epochs=5)
+        self.model.fit(X_train, y_train, epochs=10)
 
     def predict(self, X_test):
         return self.model.predict(X_test).argmax(axis=1)
