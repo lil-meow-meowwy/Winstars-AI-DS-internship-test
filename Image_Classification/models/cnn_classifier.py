@@ -1,19 +1,14 @@
 import tensorflow as tf
-from tensorflow.keras import layers, models
 from models.mnist_classifier_interface import MnistClassifierInterface
 
 class CNNClassifierModel(MnistClassifierInterface):
     def __init__(self):
-            self.model = models.Sequential([
-                layers.Reshape(target_shape=(28, 28, 1), input_shape=(28, 28)),
-                layers.Conv2D(32, (3, 3), activation='relu'),
-                layers.MaxPooling2D((2, 2)),
-                layers.Conv2D(64, (3, 3), activation='relu'),
-                layers.MaxPooling2D((2, 2)),
-                layers.Conv2D(64, (3, 3), activation='relu'),
-                layers.Flatten(),
-                layers.Dense(64, activation='relu'),
-                layers.Dense(10, activation='softmax')
+            self.model = tf.keras.models.Sequential([
+                tf.keras.layers.Conv2D(32, kernel_size=(3, 3), activation='relu', input_shape=(28, 28, 1)),
+                tf.keras.layers.MaxPooling2D(pool_size=(2, 2)),
+                tf.keras.layers.Flatten(),
+                tf.keras.layers.Dense(128, activation='relu'),
+                tf.keras.layers.Dense(10, activation='softmax')
             ])
             self.model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
 
