@@ -1,4 +1,4 @@
-# Task 1. Image classification + OOP
+# Image classification + OOP
 
 This project implements a simple image classification system for the MNIST dataset using three different models:  
 1. Random Forest Classifier (RF)  
