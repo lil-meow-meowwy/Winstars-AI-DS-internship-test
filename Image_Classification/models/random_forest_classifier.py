@@ -1,5 +1,5 @@
 from sklearn.ensemble import RandomForestClassifier
-from mnist_classifier_interface import MnistClassifierInterface
+from models.mnist_classifier_interface import MnistClassifierInterface
 
 class RandomForestClassifierModel(MnistClassifierInterface):
     def __init__(self):

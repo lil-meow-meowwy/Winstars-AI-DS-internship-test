@@ -1,4 +1,4 @@
-from mnist_classifier_interface import MnistClassifierInterface
+from models.mnist_classifier_interface import MnistClassifierInterface
 import tensorflow as tf
 
 class FeedForwardNNClassifierModel(MnistClassifierInterface):
