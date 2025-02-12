@@ -27,10 +27,10 @@ val_transform = transforms.Compose([
 ])
 
 # Load dataset
-dataset = datasets.ImageFolder('NER_and_Image_Classification/data/images', transform=train_transform)
+dataset = datasets.ImageFolder('../data/images', transform=train_transform)
 
 # Split dataset into training and validation sets
-train_dataset, val_dataset = train_test_split(dataset, test_size=0.35, random_state=42)
+train_dataset, val_dataset = train_test_split(dataset, test_size=0.3, random_state=42)
 
 # Create DataLoaders
 train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True, num_workers=4, pin_memory=True)
@@ -62,7 +62,7 @@ scaler = GradScaler('cuda')
 # Training loop
 num_epochs = 100
 best_val_loss = float('inf')
-patience = 10
+patience = 5
 epochs_without_improvement = 0
 
 for epoch in range(num_epochs):
@@ -126,7 +126,7 @@ for epoch in range(num_epochs):
     if val_loss < best_val_loss:
         best_val_loss = val_loss
         epochs_without_improvement = 0
-        torch.save(model.state_dict(), 'NER_and_Image_Classification/models/image_classification_model/image_classification_model.pth')
+        torch.save(model.state_dict(), '../models/image_classification_model/image_classification_model.pth')
     else:
         epochs_without_improvement += 1
         if epochs_without_improvement >= patience:
