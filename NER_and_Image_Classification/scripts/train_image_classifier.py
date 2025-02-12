@@ -27,7 +27,7 @@ val_transform = transforms.Compose([
 ])
 
 # Load dataset
-dataset = datasets.ImageFolder('../data/images', transform=train_transform)
+dataset = datasets.ImageFolder('NER_and_Image_Classification/data/images', transform=train_transform)
 
 # Split dataset into training and validation sets
 train_dataset, val_dataset = train_test_split(dataset, test_size=0.3, random_state=42)
@@ -126,7 +126,7 @@ for epoch in range(num_epochs):
     if val_loss < best_val_loss:
         best_val_loss = val_loss
         epochs_without_improvement = 0
-        torch.save(model.state_dict(), '../models/image_classification_model/image_classification_model.pth')
+        torch.save(model.state_dict(), 'NER_and_Image_Classification/models/image_classification_model/image_classification_model.pth')
     else:
         epochs_without_improvement += 1
         if epochs_without_improvement >= patience:
