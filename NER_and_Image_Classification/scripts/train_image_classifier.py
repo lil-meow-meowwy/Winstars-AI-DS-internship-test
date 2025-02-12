@@ -1,9 +1,10 @@
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from torchvision import datasets, transforms, models
+from torchvision import datasets, transforms
 from torch.utils.data import DataLoader
-from torch.optim.lr_scheduler import StepLR
+from torch.optim.lr_scheduler import ReduceLROnPlateau
+from efficientnet_pytorch import EfficientNet
 from sklearn.model_selection import train_test_split
 import os
 
@@ -29,15 +30,18 @@ val_transform = transforms.Compose([
 dataset = datasets.ImageFolder('../data/images', transform=train_transform)
 
 # Split dataset into training and validation sets
-train_dataset, val_dataset = train_test_split(dataset, test_size=0.2, random_state=42)
+train_dataset, val_dataset = train_test_split(dataset, test_size=0.3, random_state=42)
+\
+# Create DataLoaders
+train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True, num_workers=4)
+val_loader = DataLoader(val_dataset, batch_size=32, shuffle=False, num_workers=4)
 
 # Create DataLoaders
 train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True, num_workers=4)
 val_loader = DataLoader(val_dataset, batch_size=32, shuffle=False, num_workers=4)
 
-# Load pre-trained ResNet18 model
-model = models.resnet18(pretrained=True)
-model.fc = nn.Linear(model.fc.in_features, len(dataset.classes))
+# Load pre-trained EfficientNet model
+model = EfficientNet.from_pretrained('efficientnet-b0', num_classes=len(dataset.classes))
 
 # Move model to GPU if available
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -48,11 +52,13 @@ criterion = nn.CrossEntropyLoss()
 optimizer = optim.Adam(model.parameters(), lr=0.001, weight_decay=1e-4)
 
 # Learning rate scheduler
-scheduler = StepLR(optimizer, step_size=5, gamma=0.1)
+scheduler = ReduceLROnPlateau(optimizer, mode='min', factor=0.1, patience=3, verbose=True)
 
 # Training loop
-num_epochs = 10
+num_epochs = 100
 best_val_loss = float('inf')
+patience = 5
+epochs_without_improvement = 0
 
 for epoch in range(num_epochs):
     model.train()
@@ -105,9 +111,17 @@ for epoch in range(num_epochs):
     # Save the best model
     if val_loss < best_val_loss:
         best_val_loss = val_loss
+        epochs_without_improvement = 0
         torch.save(model.state_dict(), '../models/image_classification_model/image_classification_model.pth')
+    else:
+        epochs_without_improvement += 1
+
+        if epochs_without_improvement >= patience:
+            print("Early stopping triggered.")
+
+            break
 
     # Step the scheduler
-    scheduler.step()
+    scheduler.step(val_loss)
 
 print('Training complete. Best validation loss: {:.4f}'.format(best_val_loss))
