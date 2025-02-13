@@ -123,4 +123,4 @@ history = model.fit(
 )
 
 # Save the trained model to a file for future use
-model.save('NER_and_Image_Classification/models/image_classification_model/image_classification_model.h5')
+model.save('NER_and_Image_Classification/models/image_classification_model/image_classification_model.keras')
