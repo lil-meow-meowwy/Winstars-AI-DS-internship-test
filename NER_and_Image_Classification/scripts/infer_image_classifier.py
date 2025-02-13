@@ -117,3 +117,6 @@ if __name__ == "__main__":
     
     # Run inference
     infer_image_classifier(args.image_path)
+
+
+# python infer_image_classifier.py ..\data\images\antelope\0a37838e99.jpg
