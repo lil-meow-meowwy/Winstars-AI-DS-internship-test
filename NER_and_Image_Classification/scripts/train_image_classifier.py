@@ -1,139 +1,126 @@
-import torch
-import torch.nn as nn
-import torch.optim as optim
-from torchvision import datasets, transforms
-from torch.utils.data import DataLoader
-from torch.optim.lr_scheduler import ReduceLROnPlateau
-from torch.amp import GradScaler, autocast
-from efficientnet_pytorch import EfficientNet
+# Import necessary libraries
+import tensorflow as tf
+from tensorflow.keras import layers, models, optimizers
+from tensorflow.keras.applications import EfficientNetB3
+from tensorflow.keras.callbacks import EarlyStopping, ReduceLROnPlateau
 from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import LabelEncoder
+from tensorflow.keras.preprocessing.image import ImageDataGenerator
+import pandas as pd
+import os
+import warnings
+from sklearn.exceptions import ConvergenceWarning
 
-# Define transforms with data augmentation for training
-train_transform = transforms.Compose([
-    transforms.RandomResizedCrop(300),  # EfficientNet-B3 uses 300x300 resolution
-    transforms.RandomHorizontalFlip(),
-    transforms.RandomRotation(20),
-    transforms.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2, hue=0.1),
-    transforms.ToTensor(),
-    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-])
+# Suppress warnings to keep the output clean
+warnings.filterwarnings("ignore", category=ConvergenceWarning)
+warnings.simplefilter(action='ignore', category=FutureWarning)
+warnings.simplefilter(action='ignore', category=UserWarning)
 
-# Define transforms for validation (no augmentation)
-val_transform = transforms.Compose([
-    transforms.Resize(330),  # Slightly larger than 300 for center crop
-    transforms.CenterCrop(300),
-    transforms.ToTensor(),
-    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-])
+# Define constants for image dimensions, batch size, and number of epochs
+IMAGE_PATH = 'NER_and_Image_Classification/data/images'
+IMG_HEIGHT, IMG_WIDTH = 224, 224
+BATCH_SIZE = 32
+EPOCHS = 100
 
-# Load dataset
-dataset = datasets.ImageFolder('NER_and_Image_Classification/data/images', transform=train_transform)
+# Initialize a dictionary to store image paths and corresponding labels
+dataset = {'image_path': [], 'labels': []}
 
-# Split dataset into training and validation sets
-train_dataset, val_dataset = train_test_split(dataset, test_size=0.3, random_state=42)
+# Loop through each class folder in the dataset directory
+for class_name in os.listdir(IMAGE_PATH):
+    class_dir = os.path.join(IMAGE_PATH, class_name)
 
-# Create DataLoaders
-train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True, num_workers=4, pin_memory=True)
-val_loader = DataLoader(val_dataset, batch_size=32, shuffle=False, num_workers=4, pin_memory=True)
+    # Skip if it's not a directory
+    if not os.path.isdir(class_dir):
+        continue
+    
+    # Loop through each image in the class folder
+    for image_name in os.listdir(class_dir):
+        image_path = os.path.join(class_dir, image_name)
+        
+        # Append the image path and label to the dataset dictionary
+        dataset["image_path"].append(image_path)
+        dataset["labels"].append(class_name)
 
-# Load pre-trained EfficientNet-B3 model
-model = EfficientNet.from_pretrained('efficientnet-b0', num_classes=len(dataset.classes))
+# Convert the dataset dictionary to a pandas DataFrame for easier manipulation
+df = pd.DataFrame(dataset) 
 
-# Move model to GPU if available
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+# Encode the string labels into integers using LabelEncoder
+label_encoder = LabelEncoder()
+df['encoded_labels'] = label_encoder.fit_transform(df['labels'])
 
-if device.type == "cuda":
-    print(f"Using GPU: {torch.cuda.get_device_name(0)}")
-else:
-    print("Using CPU")
+# Split the dataset into training and validation sets (70% training, 30% validation)
+train_df, val_df = train_test_split(df, test_size=0.3, random_state=42)
 
-model = model.to(device)
+# Initialize an ImageDataGenerator for preprocessing and potential data augmentation
+generator = ImageDataGenerator(
+    preprocessing_function = tf.keras.applications.efficientnet.preprocess_input,
+)
 
-# Define loss function and optimizer
-criterion = nn.CrossEntropyLoss()
-optimizer = optim.Adam(model.parameters(), lr=0.001, weight_decay=1e-4)
+# Create a data generator for the training set
+train_generator = generator.flow_from_dataframe(
+    train_df, 
+    x_col='image_path', 
+    y_col='labels', 
+    target_size=(IMG_HEIGHT, IMG_WIDTH), 
+    color_mode='rgb',
+    class_mode='categorical',
+    batch_size=BATCH_SIZE,
+    shuffle=True,
+    seed=42
+)
 
-# Learning rate scheduler
-scheduler = ReduceLROnPlateau(optimizer, mode='min', factor=0.1, patience=3, verbose=True)
+# Create a data generator for the validation set
+val_generator = generator.flow_from_dataframe(
+    val_df, 
+    x_col='image_path', 
+    y_col='labels', 
+    target_size=(IMG_HEIGHT, IMG_WIDTH),
+    color_mode='rgb',
+    class_mode='categorical',
+    batch_size=BATCH_SIZE,
+    shuffle=False
+)
 
-# Initialize GradScaler for mixed precision
-scaler = GradScaler('cuda')
+# Function to create the EfficientNetB3 model
+def create_model(num_classes):
+    # Load the EfficientNetB3 model pre-trained on ImageNet, excluding the top layers
+    base_model = EfficientNetB3(weights='imagenet', include_top=False, input_shape=(IMG_HEIGHT, IMG_WIDTH, 3))
+    base_model.trainable = False  # Freeze the base model to prevent training
 
-# Training loop
-num_epochs = 100
-best_val_loss = float('inf')
-patience = 5
-epochs_without_improvement = 0
+    # Build the model by adding custom layers on top of the base model
+    model = models.Sequential([
+        base_model,
+        layers.GlobalAveragePooling2D(),  # Pooling to convert the feature map to a 1D vector
+        layers.Dense(256, activation='relu'),  # Fully connected layer with 256 units
+        layers.BatchNormalization(),  # Normalize the activations of the previous layer
+        layers.Dropout(0.45),  # Dropout layer to prevent overfitting
+        layers.Dense(num_classes, activation='softmax')  # Output layer with softmax activation
+    ])
 
-for epoch in range(num_epochs):
-    model.train()
-    running_loss = 0.0
-    correct = 0
-    total = 0
+    # Compile the model with Adam optimizer and categorical crossentropy loss
+    model.compile(optimizer=optimizers.Adam(learning_rate=1e-3), 
+                  loss='categorical_crossentropy', 
+                  metrics=['accuracy'])
 
-    # Training phase
-    for inputs, labels in train_loader:
-        inputs, labels = inputs.to(device, non_blocking=True), labels.to(device, non_blocking=True)
+    return model
 
-        optimizer.zero_grad()
+# Determine the number of unique classes in the dataset
+num_classes = len(df['labels'].unique())
 
-        # Forward pass with mixed precision
-        with autocast('cuda'):
-            outputs = model(inputs)
-            loss = criterion(outputs, labels)
+# Create the model using the defined function
+model = create_model(num_classes)
 
-        # Backward pass with scaling
-        scaler.scale(loss).backward()
-        scaler.step(optimizer)
-        scaler.update()
+# Define callbacks for early stopping and learning rate reduction
+early_stopping = EarlyStopping(monitor='val_loss', patience=5, restore_best_weights=True)
+lr_scheduler = ReduceLROnPlateau(monitor='val_loss', factor=0.2, patience=2, verbose=True, mode='min')
 
-        running_loss += loss.item()
-        _, predicted = outputs.max(1)
-        total += labels.size(0)
-        correct += predicted.eq(labels).sum().item()
+# Train the model using the training and validation generators
+history = model.fit(
+    train_generator,
+    epochs=EPOCHS,
+    validation_data=val_generator,
+    callbacks=[early_stopping, lr_scheduler]
+)
 
-    train_loss = running_loss / len(train_loader)
-    train_acc = 100. * correct / total
-
-    # Validation phase
-    model.eval()
-    val_loss = 0.0
-    correct = 0
-    total = 0
-
-    with torch.no_grad():
-        for inputs, labels in val_loader:
-            inputs, labels = inputs.to(device, non_blocking=True), labels.to(device, non_blocking=True)
-
-            # Forward pass with mixed precision
-            with autocast('cuda'):
-                outputs = model(inputs)
-                loss = criterion(outputs, labels)
-
-            val_loss += loss.item()
-            _, predicted = outputs.max(1)
-            total += labels.size(0)
-            correct += predicted.eq(labels).sum().item()
-
-    val_loss /= len(val_loader)
-    val_acc = 100. * correct / total
-
-    print(f'Epoch {epoch+1}/{num_epochs}, '
-          f'Train Loss: {train_loss:.4f}, Train Acc: {train_acc:.2f}%, '
-          f'Val Loss: {val_loss:.4f}, Val Acc: {val_acc:.2f}%')
-
-    # Save the best model
-    if val_loss < best_val_loss:
-        best_val_loss = val_loss
-        epochs_without_improvement = 0
-        torch.save(model.state_dict(), 'NER_and_Image_Classification/models/image_classification_model/image_classification_model.pth')
-    else:
-        epochs_without_improvement += 1
-        if epochs_without_improvement >= patience:
-            print("Early stopping triggered.")
-            break
-
-    # Step the scheduler
-    scheduler.step(val_loss)
-
-print('Training complete. Best validation loss: {:.4f}'.format(best_val_loss))
+# Save the trained model to a file for future use
+model.save('NER_and_Image_Classification/models/image_classification_model/image_classification_model.h5')
