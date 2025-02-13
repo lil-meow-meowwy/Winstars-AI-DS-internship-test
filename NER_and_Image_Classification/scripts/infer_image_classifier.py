@@ -32,8 +32,7 @@ except Exception as e:
     print(f"Error loading model: {e}")
     exit(1)
 
-# Load class labels from the training generator (or validation generator)
-# Replace this with the path to your training data directory
+# Load class labels
 train_data_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'data', 'images'))
 
 # Create an ImageDataGenerator to extract class labels
