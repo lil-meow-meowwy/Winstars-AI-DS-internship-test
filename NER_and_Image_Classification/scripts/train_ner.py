@@ -1,10 +1,9 @@
-import os
 from transformers import AutoTokenizer, AutoModelForTokenClassification, Trainer, TrainingArguments
 from datasets import load_dataset
-import evaluate  # Use evaluate instead of load_metric
+import evaluate
 import numpy as np
 
-# Load the CoNLL-2003 dataset with trust_remote_code=True
+# Load the CoNLL-2003 dataset
 dataset = load_dataset("conll2003", trust_remote_code=True)
 
 # Define a mapping for labels
@@ -12,7 +11,7 @@ label_list = dataset["train"].features["ner_tags"].feature.names
 label_list.append("B-ANIMAL")  # Add a new label for animals
 label_list.append("I-ANIMAL")  # Add a new label for animals (inside token)
 
-# List of animals to recognize
+# List of animals to recognize (from animal.txt)
 animals = [
     "antelope", "badger", "bat", "bear", "bee", "beetle", "bison", "boar", "butterfly",
     "cat", "caterpillar", "chimpanzee", "cockroach", "cow", "coyote", "crab", "crow",
@@ -29,7 +28,7 @@ animals = [
 ]
 
 # Load a pre-trained tokenizer and model (DistilBERT)
-model_name = "distilbert-base-cased"  # Using DistilBERT instead of BERT
+model_name = "distilbert-base-cased"
 tokenizer = AutoTokenizer.from_pretrained(model_name)
 model = AutoModelForTokenClassification.from_pretrained(model_name, num_labels=len(label_list))
 
@@ -37,27 +36,32 @@ model = AutoModelForTokenClassification.from_pretrained(model_name, num_labels=l
 def tokenize_and_align_labels(examples):
     tokenized_inputs = tokenizer(
         examples["tokens"],
-        truncation=True,  # Truncate sequences to the model's max length
-        padding=True,     # Pad sequences to the same length
+        truncation=True,        # Truncate sequences to the model's max length
+        padding="max_length",   # Pad sequences to the maximum length
         is_split_into_words=True,
     )
+
     labels = []
+
     for i, label in enumerate(examples["ner_tags"]):
         word_ids = tokenized_inputs.word_ids(batch_index=i)
         label_ids = []
+
         for word_idx in word_ids:
             if word_idx is None:
-                label_ids.append(-100)  # Special token (e.g., [CLS], [SEP])
+                label_ids.append(-100)  # Special token
             else:
                 # Map the original label to the new label list
                 original_label = label[word_idx]
+
                 if original_label == -100:
                     label_ids.append(-100)
                 else:
                     label_name = label_list[original_label]
+
                     if label_name.startswith("B-") or label_name.startswith("I-"):
                         # Replace with animal labels if the word is an animal
-                        token = examples["tokens"][i][word_idx].lower()  # Ensure the token is lowercase
+                        token = examples["tokens"][i][word_idx].lower() 
                         if token in animals:  # Check if the token is in the animal list
                             if label_name.startswith("B-"):
                                 label_ids.append(label_list.index("B-ANIMAL"))
@@ -67,8 +71,14 @@ def tokenize_and_align_labels(examples):
                             label_ids.append(original_label)
                     else:
                         label_ids.append(original_label)
+
+        # Pad or truncate labels to match the tokenized input length
+        label_ids = label_ids[:len(tokenized_inputs["input_ids"][i])]  # Truncate if necessary
+        label_ids.extend([-100] * (len(tokenized_inputs["input_ids"][i]) - len(label_ids)))  # Pad if necessary
         labels.append(label_ids)
+
     tokenized_inputs["labels"] = labels
+
     return tokenized_inputs
 
 # Apply tokenization and alignment
@@ -77,16 +87,16 @@ tokenized_datasets = dataset.map(tokenize_and_align_labels, batched=True)
 # Define training arguments
 training_args = TrainingArguments(
     output_dir="NER_and_Image_Classification/models/ner_model",  # Directory to save the model
-    evaluation_strategy="epoch",    # Evaluate every epoch
-    learning_rate=2e-5,             # Learning rate
-    per_device_train_batch_size=16, # Batch size for training
-    per_device_eval_batch_size=16,  # Batch size for evaluation
-    num_train_epochs=20,             # Number of epochs
-    weight_decay=0.01,              # Weight decay
-    save_strategy="epoch",          # Save model every epoch
-    logging_dir="logs",             # Directory for logs
-    logging_steps=10,               # Log every 10 steps
-    report_to="none",               # Disable external logging
+    evaluation_strategy="epoch",                                 # Evaluate every epoch
+    learning_rate=2e-5,                                          # Learning rate
+    per_device_train_batch_size=16,                              # Batch size for training
+    per_device_eval_batch_size=16,                               # Batch size for evaluation
+    num_train_epochs=20,                                         # Number of epochs
+    weight_decay=0.01,                                           # Weight decay
+    save_strategy="epoch",                                       # Save model every epoch
+    logging_dir="logs",                                          # Directory for logs
+    logging_steps=10,                                            # Log every 10 steps
+    report_to="none",                                            # Disable external logging
 )
 
 # Define a function to compute metrics
@@ -104,6 +114,7 @@ def compute_metrics(p):
     # Load the seqeval metric using evaluate
     metric = evaluate.load("seqeval")
     results = metric.compute(predictions=true_predictions, references=true_labels)
+    
     return {
         "precision": results["overall_precision"],
         "recall": results["overall_recall"],
@@ -125,5 +136,5 @@ trainer = Trainer(
 trainer.train()
 
 # Save the model
-trainer.save_model("NER_and_Image_Classification/models/ner_model")
-tokenizer.save_pretrained("NER_and_Image_Classification/models/ner_model")
+trainer.save_model("../models/ner_model")
+tokenizer.save_pretrained("../models/ner_model")
