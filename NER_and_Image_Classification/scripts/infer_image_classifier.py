@@ -27,7 +27,6 @@ if not os.path.exists(MODEL_PATH):
 # Load the trained model
 try:
     model = load_model(MODEL_PATH)
-    print("Model loaded successfully.")
 except Exception as e:
     print(f"Error loading model: {e}")
     exit(1)

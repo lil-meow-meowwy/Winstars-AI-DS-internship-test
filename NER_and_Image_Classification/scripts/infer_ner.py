@@ -3,7 +3,7 @@ import os
 import torch
 
 # Load the trained NER model and tokenizer
-model_path = os.path.join("..", "models", "ner_model")
+model_path = os.path.join("models", "ner_model")
 ner_pipeline = pipeline("ner", model=model_path, tokenizer=model_path)
 
 # Define label mapping (ensure this matches training)
