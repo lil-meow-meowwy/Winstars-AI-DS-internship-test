@@ -1,0 +1,19 @@
+# Core dependencies
+tensorflow>=2.12.0
+transformers>=4.30.0
+datasets>=2.12.0
+evaluate>=0.4.0
+pandas>=1.5.3
+numpy>=1.23.5
+scikit-learn>=1.2.2
+Pillow>=9.4.0
+
+# Additional dependencies for image processing and model training
+absl-py>=1.4.0
+torch>=2.0.0
+
+# For logging and warnings suppression
+warnings>=0.0.1
+
+# For command-line argument parsing
+argparse>=1.4.0
