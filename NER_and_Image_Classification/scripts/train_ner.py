@@ -123,5 +123,5 @@ trainer = Trainer(
 trainer.train()
 
 # Save the model
-trainer.save_model("../models/ner_model")
-tokenizer.save_pretrained("../models/ner_model")
+trainer.save_model("NER_and_Image_Classification/models/ner_model")
+tokenizer.save_pretrained("NER_and_Image_Classification/models/ner_model")
