@@ -195,8 +195,7 @@ The project requires the following Python packages:
 - `numpy`
 - `pandas`
 - `Pillow`
-- `os`
-- `sys`
+
 
 Install them using:
 ```bash
