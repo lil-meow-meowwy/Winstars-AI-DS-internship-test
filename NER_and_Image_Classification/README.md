@@ -1,31 +1,4 @@
-# Named Entity Recognition (NER) and Image Classification
-
-Certainly! Below is a `README.md` file for your repository. This README provides an overview of the project, instructions for setting up and running the code, and details about the file structure.
-
----
-
-## **Project Overview**
-
-The project consists of two main components:
-1. **Named Entity Recognition (NER):**
-   - A transformer-based NER model is trained to extract animal names from text descriptions.
-   - The model is fine-tuned on a custom dataset with animal-related entities.
-
-2. **Image Classification:**
-   - An image classification model is trained to classify animals in images.
-   - The model is based on EfficientNetB3 and is trained on a dataset containing at least 10 classes of animals.
-
-The pipeline integrates these two models to:
-- Extract animal names from user-provided text.
-- Classify the animal in a user-provided image.
-- Compare the results and return `True` if the animal in the text matches the animal in the image, otherwise `False`.
-
----
-Certainly! Below is the updated `README.md` file with information about the dataset used in the project.
-
----
-
-# **Named Entity Recognition (NER) and Image Classification Pipeline**
+# **Named Entity Recognition (NER) and Image Classification**
 
 This repository contains a machine learning pipeline that combines **Named Entity Recognition (NER)** and **Image Classification** to verify if an animal mentioned in a text description matches the animal present in an image. The pipeline is designed to handle user inputs in natural language and images, and it outputs a boolean value indicating whether the text description matches the image content.
 
