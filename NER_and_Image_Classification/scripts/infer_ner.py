@@ -1,4 +1,5 @@
 from transformers import pipeline
+import os
 
 # Load the trained NER model and tokenizer
 model_path = os.path.join("..", "models", "ner_model")
